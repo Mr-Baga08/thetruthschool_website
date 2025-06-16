@@ -1,46 +1,48 @@
 from flask import Flask, request, jsonify
-from flask_cors import CORS
 import os
-import logging
+import re
 from datetime import datetime
-import json
-
-# Configure logging
-logging.basicConfig(level=logging.INFO)
-logger = logging.getLogger(__name__)
 
 # Create Flask app
 app = Flask(__name__)
-CORS(app)  # Enable CORS for all routes
 
-# In-memory storage for demo (replace with database later)
+# Enable CORS manually
+@app.after_request
+def after_request(response):
+    response.headers.add('Access-Control-Allow-Origin', '*')
+    response.headers.add('Access-Control-Allow-Headers', 'Content-Type,Authorization')
+    response.headers.add('Access-Control-Allow-Methods', 'GET,PUT,POST,DELETE,OPTIONS')
+    return response
+
+# In-memory storage (replace with database later)
 waitlist_entries = []
 feedback_responses = []
 
-# Helper function to validate email
 def is_valid_email(email):
-    import re
-    pattern = r'^[^\s@]+@[^\s@]+\.[^\s@]+$'
+    pattern = r'^[^\s@]+@[^\s@]+\.[^\s@]+'
     return re.match(pattern, email) is not None
 
 @app.route('/api/health', methods=['GET'])
 def health_check():
     return jsonify({
         "status": "healthy", 
-        "message": "TheTruthSchool API is running"
+        "message": "TheTruthSchool API is running with Flask"
     })
 
 @app.route('/api/debug', methods=['GET'])
 def debug_info():
     return jsonify({
-        "mongodb_uri_exists": bool(os.getenv("MONGODB_URI")),
-        "mongodb_uri_prefix": os.getenv("MONGODB_URI", "")[:20] + "..." if os.getenv("MONGODB_URI") else None,
+        "flask_version": "working",
         "waitlist_count": len(waitlist_entries),
-        "feedback_count": len(feedback_responses)
+        "feedback_count": len(feedback_responses),
+        "python_version": "3.x"
     })
 
-@app.route('/api/waitlist', methods=['POST'])
+@app.route('/api/waitlist', methods=['POST', 'OPTIONS'])
 def join_waitlist():
+    if request.method == 'OPTIONS':
+        return '', 200
+        
     try:
         data = request.get_json()
         
@@ -62,10 +64,8 @@ def join_waitlist():
         # Add to waitlist
         waitlist_entries.append({
             "email": email,
-            "created_at": datetime.utcnow().isoformat()
+            "created_at": datetime.now().isoformat()
         })
-        
-        logger.info(f"Added {email} to waitlist")
         
         return jsonify({
             "message": "Successfully joined the waitlist!",
@@ -73,11 +73,13 @@ def join_waitlist():
         }), 201
         
     except Exception as e:
-        logger.error(f"Waitlist error: {str(e)}")
-        return jsonify({"error": "Failed to join waitlist"}), 500
+        return jsonify({"error": f"Failed to join waitlist: {str(e)}"}), 500
 
-@app.route('/api/feedback', methods=['POST'])
+@app.route('/api/feedback', methods=['POST', 'OPTIONS'])
 def submit_feedback():
+    if request.method == 'OPTIONS':
+        return '', 200
+        
     try:
         data = request.get_json()
         
@@ -98,10 +100,8 @@ def submit_feedback():
             "ai_coach_help": data['ai_coach_help'].strip(),
             "confidence_area": data['confidence_area'].strip(),
             "additional_features": data.get('additional_features', '').strip(),
-            "created_at": datetime.utcnow().isoformat()
+            "created_at": datetime.now().isoformat()
         })
-        
-        logger.info(f"Added feedback for {email}")
         
         return jsonify({
             "message": "Feedback submitted successfully!",
@@ -109,28 +109,22 @@ def submit_feedback():
         }), 201
         
     except Exception as e:
-        logger.error(f"Feedback error: {str(e)}")
-        return jsonify({"error": "Failed to submit feedback"}), 500
+        return jsonify({"error": f"Failed to submit feedback: {str(e)}"}), 500
 
 @app.route('/api/stats', methods=['GET'])
 def get_stats():
-    try:
-        return jsonify({
-            "waitlist_entries": len(waitlist_entries),
-            "feedback_responses": len(feedback_responses)
-        })
-    except Exception as e:
-        logger.error(f"Stats error: {str(e)}")
-        return jsonify({"error": "Failed to get stats"}), 500
+    return jsonify({
+        "waitlist_entries": len(waitlist_entries),
+        "feedback_responses": len(feedback_responses)
+    })
 
-# Default route
-@app.route('/')
+@app.route('/', methods=['GET'])
 def index():
-    return jsonify({"message": "TheTruthSchool API"})
+    return jsonify({"message": "TheTruthSchool API is running"})
 
-# Export for Vercel
+# Vercel handler
 def handler(event, context):
-    return app(event, context)
+    return app
 
 if __name__ == '__main__':
     app.run(debug=True)
