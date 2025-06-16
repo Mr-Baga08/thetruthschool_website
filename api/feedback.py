@@ -5,6 +5,10 @@ import os
 from datetime import datetime
 from pymongo import MongoClient
 
+# Global variables for connection caching
+_client = None
+_db = None
+
 def is_valid_email(email):
     pattern = r'^[^\s@]+@[^\s@]+\.[^\s@]+$'
     return re.match(pattern, email) is not None

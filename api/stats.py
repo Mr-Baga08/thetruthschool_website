@@ -3,6 +3,10 @@ import json
 import os
 from pymongo import MongoClient
 
+# Global variables for connection caching
+_client = None
+_db = None
+
 def get_database():
     """Bulletproof database connection that always works"""
     global _client, _db

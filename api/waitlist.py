@@ -4,7 +4,10 @@ import re
 import os
 from datetime import datetime
 from pymongo import MongoClient
-from urllib.parse import quote_plus
+
+# Global variables for connection caching
+_client = None
+_db = None
 
 def is_valid_email(email):
     pattern = r'^[^\s@]+@[^\s@]+\.[^\s@]+$'
