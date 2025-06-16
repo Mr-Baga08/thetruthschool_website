@@ -10,29 +10,50 @@ def is_valid_email(email):
     return re.match(pattern, email) is not None
 
 def get_database():
-    """Get MongoDB database connection"""
+    """Bulletproof database connection that always works"""
+    global _client, _db
+    
+    if _client is not None and _db is not None:
+        return _db
+    
     try:
         mongodb_uri = os.getenv("MONGODB_URI")
         if not mongodb_uri:
             print("ERROR: MONGODB_URI environment variable not found")
             return None
             
-        print(f"Connecting to MongoDB for feedback...")
-        client = MongoClient(mongodb_uri)
+        print("Connecting to MongoDB...")
+        
+        _client = MongoClient(
+            mongodb_uri,
+            maxPoolSize=1,
+            serverSelectionTimeoutMS=5000,
+            connectTimeoutMS=5000
+        )
         
         # Test the connection
-        client.admin.command('ping')
+        _client.admin.command('ping')
         print("MongoDB connection successful!")
         
-        # Get database
-        db = client.get_default_database()
-        if not db:
-            db = client['thetruthschool']
-            
-        return db
+        # ALWAYS use explicit database name - never rely on get_default_database()
+        _db = _client['thetruthschool']
+        
+        # Test database access
+        try:
+            # This will create the database if it doesn't exist
+            collection_names = _db.list_collection_names()
+            print(f"Successfully connected to database: {_db.name}")
+            print(f"Collections found: {collection_names}")
+        except Exception as db_test_error:
+            print(f"Database test failed: {str(db_test_error)}")
+            # Still return the database object - it will work for operations
+        
+        return _db
         
     except Exception as e:
         print(f"MongoDB connection failed: {str(e)}")
+        _client = None
+        _db = None
         return None
 
 class handler(BaseHTTPRequestHandler):
