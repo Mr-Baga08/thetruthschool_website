@@ -14,7 +14,7 @@ interface QuizData {
   additionalFeatures: string;
 }
 
-export const ConversionSection = () => {
+const ConversionSection = () => {
   const [isVisible, setIsVisible] = useState(false);
   const [email, setEmail] = useState("");
   const [isValidEmail, setIsValidEmail] = useState(false);
@@ -294,3 +294,4 @@ export const ConversionSection = () => {
     </section>
   );
 };
+
