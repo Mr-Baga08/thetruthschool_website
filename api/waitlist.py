@@ -91,7 +91,7 @@ class handler(BaseHTTPRequestHandler):
             
             # Get database connection
             db = get_database()
-            if not db:
+            if db is None:
                 self.send_error_response(500, "Database connection failed")
                 return
                 
