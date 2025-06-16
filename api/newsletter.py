@@ -1,14 +1,39 @@
 from http.server import BaseHTTPRequestHandler
 import json
 import re
+import os
 from datetime import datetime
-
-# Simple in-memory storage
-newsletter_data = []
+from pymongo import MongoClient
 
 def is_valid_email(email):
     pattern = r'^[^\s@]+@[^\s@]+\.[^\s@]+$'
     return re.match(pattern, email) is not None
+
+def get_database():
+    """Get MongoDB database connection"""
+    try:
+        mongodb_uri = os.getenv("MONGODB_URI")
+        if not mongodb_uri:
+            print("ERROR: MONGODB_URI environment variable not found")
+            return None
+            
+        print(f"Connecting to MongoDB for newsletter...")
+        client = MongoClient(mongodb_uri)
+        
+        # Test the connection
+        client.admin.command('ping')
+        print("MongoDB connection successful!")
+        
+        # Get database
+        db = client.get_default_database()
+        if not db:
+            db = client['thetruthschool']
+            
+        return db
+        
+    except Exception as e:
+        print(f"MongoDB connection failed: {str(e)}")
+        return None
 
 class handler(BaseHTTPRequestHandler):
     def do_OPTIONS(self):
@@ -26,6 +51,7 @@ class handler(BaseHTTPRequestHandler):
             
             # Parse JSON
             data = json.loads(post_data.decode('utf-8'))
+            print(f"Received newsletter request: {data}")
             
             # Validate email
             if not data or 'email' not in data:
@@ -38,14 +64,24 @@ class handler(BaseHTTPRequestHandler):
                 self.send_error_response(400, "Invalid email format")
                 return
             
-            # Optional: Get preferences
+            # Get preferences
             preferences = data.get('preferences', {})
             weekly_updates = preferences.get('weekly_updates', True)
             product_updates = preferences.get('product_updates', True)
             career_tips = preferences.get('career_tips', True)
             
+            # Get database connection
+            db = get_database()
+            if not db:
+                self.send_error_response(500, "Database connection failed")
+                return
+                
+            collection = db.newsletter_subscribers
+            
             # Check if email already subscribed
-            if any(entry['email'] == email for entry in newsletter_data):
+            existing = collection.find_one({"email": email})
+            if existing:
+                print(f"Email {email} already subscribed to newsletter")
                 response = {
                     "message": "Email already subscribed to newsletter!",
                     "success": True
@@ -57,21 +93,26 @@ class handler(BaseHTTPRequestHandler):
                     "weekly_updates": weekly_updates,
                     "product_updates": product_updates,
                     "career_tips": career_tips,
-                    "subscribed_at": datetime.now().isoformat()
+                    "subscribed_at": datetime.utcnow(),
+                    "source": "website",
+                    "status": "active"
                 }
                 
-                newsletter_data.append(newsletter_entry)
+                result = collection.insert_one(newsletter_entry)
+                print(f"Added {email} to newsletter with ID: {result.inserted_id}")
                 
                 response = {
                     "message": "Successfully subscribed to TheTruthSchool newsletter!",
                     "success": True
                 }
             
-            self.send_success_response(response)
+            self.send_success_response(response, 201)
             
         except json.JSONDecodeError:
+            print("Invalid JSON received")
             self.send_error_response(400, "Invalid JSON")
         except Exception as e:
+            print(f"Error processing newsletter request: {str(e)}")
             self.send_error_response(500, f"Server error: {str(e)}")
 
     def send_success_response(self, data, status_code=201):
