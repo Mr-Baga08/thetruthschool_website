@@ -159,6 +159,5 @@ async def get_stats():
             detail=f"Failed to get stats: {str(e)}"
         )
 
-# Default handler for Vercel
-def handler(request):
-    return app
+# Export for Vercel
+handler = app
