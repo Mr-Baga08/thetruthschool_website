@@ -1,226 +1,136 @@
-from fastapi import FastAPI, HTTPException, status, Request
-from fastapi.middleware.cors import CORSMiddleware
-from beanie import Document, init_beanie
-from motor.motor_asyncio import AsyncIOMotorClient
-from pydantic import BaseModel, EmailStr
-from datetime import datetime
-from typing import Optional
+from flask import Flask, request, jsonify
+from flask_cors import CORS
 import os
-import traceback
 import logging
-from contextlib import asynccontextmanager
+from datetime import datetime
+import json
 
 # Configure logging
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
-# Pydantic models for request/response
-class WaitlistRequest(BaseModel):
-    email: EmailStr
+# Create Flask app
+app = Flask(__name__)
+CORS(app)  # Enable CORS for all routes
 
-class FeedbackRequest(BaseModel):
-    email: EmailStr
-    frustration: str
-    ai_coach_help: str
-    confidence_area: str
-    additional_features: Optional[str] = None
+# In-memory storage for demo (replace with database later)
+waitlist_entries = []
+feedback_responses = []
 
-class SuccessResponse(BaseModel):
-    message: str
-    success: bool = True
+# Helper function to validate email
+def is_valid_email(email):
+    import re
+    pattern = r'^[^\s@]+@[^\s@]+\.[^\s@]+$'
+    return re.match(pattern, email) is not None
 
-# Beanie Document models for MongoDB
-class WaitlistEntry(Document):
-    email: EmailStr
-    created_at: datetime = datetime.utcnow()
+@app.route('/api/health', methods=['GET'])
+def health_check():
+    return jsonify({
+        "status": "healthy", 
+        "message": "TheTruthSchool API is running"
+    })
 
-    class Settings:
-        name = "waitlist_entries"
-
-class FeedbackResponse(Document):
-    email: EmailStr
-    frustration: str
-    ai_coach_help: str
-    confidence_area: str
-    additional_features: Optional[str] = None
-    created_at: datetime = datetime.utcnow()
-
-    class Settings:
-        name = "feedback_responses"
-
-# Database connection
-async def init_database():
-    try:
-        # Get MongoDB URI from environment variable
-        mongodb_uri = os.getenv("MONGODB_URI")
-        if not mongodb_uri:
-            logger.error("MONGODB_URI environment variable is not set")
-            raise ValueError("MONGODB_URI environment variable is required")
-        
-        logger.info("Connecting to MongoDB...")
-        
-        # Create Motor client
-        client = AsyncIOMotorClient(mongodb_uri)
-        
-        # Test connection
-        await client.admin.command('ping')
-        logger.info("MongoDB connection successful")
-        
-        # Get database (will use default from connection string)
-        database = client.get_default_database()
-        if not database:
-            # Fallback to a specific database name
-            database = client.thetruthschool
-        
-        # Initialize beanie with the database and document models
-        await init_beanie(
-            database=database,
-            document_models=[WaitlistEntry, FeedbackResponse]
-        )
-        logger.info("Beanie initialization successful")
-        
-    except Exception as e:
-        logger.error(f"Database initialization failed: {str(e)}")
-        logger.error(traceback.format_exc())
-        raise
-
-# Lifespan context manager
-@asynccontextmanager
-async def lifespan(app: FastAPI):
-    # Startup
-    try:
-        await init_database()
-        logger.info("Application startup complete")
-    except Exception as e:
-        logger.error(f"Application startup failed: {str(e)}")
-        # Don't raise here to allow app to start even if DB fails
-    yield
-    # Shutdown (if needed)
-    logger.info("Application shutdown")
-
-# Create FastAPI app
-app = FastAPI(
-    title="TheTruthSchool API",
-    description="Backend API for TheTruthSchool pre-launch website",
-    version="1.0.0",
-    lifespan=lifespan
-)
-
-# Add CORS middleware
-app.add_middleware(
-    CORSMiddleware,
-    allow_origins=["*"],  # In production, replace with your domain
-    allow_credentials=True,
-    allow_methods=["*"],
-    allow_headers=["*"],
-)
-
-# Health check endpoint
-@app.get("/api/health")
-async def health_check():
-    return {"status": "healthy", "message": "TheTruthSchool API is running"}
-
-# Debug endpoint to check environment
-@app.get("/api/debug")
-async def debug_info():
-    return {
+@app.route('/api/debug', methods=['GET'])
+def debug_info():
+    return jsonify({
         "mongodb_uri_exists": bool(os.getenv("MONGODB_URI")),
         "mongodb_uri_prefix": os.getenv("MONGODB_URI", "")[:20] + "..." if os.getenv("MONGODB_URI") else None,
-        "environment": dict(os.environ)
-    }
+        "waitlist_count": len(waitlist_entries),
+        "feedback_count": len(feedback_responses)
+    })
 
-# Waitlist endpoint
-@app.post("/api/waitlist", response_model=SuccessResponse, status_code=status.HTTP_201_CREATED)
-async def join_waitlist(request: WaitlistRequest):
+@app.route('/api/waitlist', methods=['POST'])
+def join_waitlist():
     try:
-        logger.info(f"Waitlist request received for email: {request.email}")
+        data = request.get_json()
+        
+        if not data or 'email' not in data:
+            return jsonify({"error": "Email is required"}), 400
+        
+        email = data['email'].strip().lower()
+        
+        if not is_valid_email(email):
+            return jsonify({"error": "Invalid email format"}), 400
         
         # Check if email already exists
-        existing_entry = await WaitlistEntry.find_one(WaitlistEntry.email == request.email)
+        if any(entry['email'] == email for entry in waitlist_entries):
+            return jsonify({
+                "message": "Email already registered for early access!",
+                "success": True
+            }), 200
         
-        if existing_entry:
-            logger.info(f"Email {request.email} already exists in waitlist")
-            return SuccessResponse(
-                message="Email already registered for early access!",
-                success=True
-            )
+        # Add to waitlist
+        waitlist_entries.append({
+            "email": email,
+            "created_at": datetime.utcnow().isoformat()
+        })
         
-        # Create new waitlist entry
-        new_entry = WaitlistEntry(email=request.email)
-        await new_entry.insert()
+        logger.info(f"Added {email} to waitlist")
         
-        logger.info(f"Successfully added {request.email} to waitlist")
-        return SuccessResponse(
-            message="Successfully joined the waitlist!",
-            success=True
-        )
+        return jsonify({
+            "message": "Successfully joined the waitlist!",
+            "success": True
+        }), 201
         
     except Exception as e:
         logger.error(f"Waitlist error: {str(e)}")
-        logger.error(traceback.format_exc())
-        raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"Failed to join waitlist: {str(e)}"
-        )
+        return jsonify({"error": "Failed to join waitlist"}), 500
 
-# Feedback endpoint
-@app.post("/api/feedback", response_model=SuccessResponse, status_code=status.HTTP_201_CREATED)
-async def submit_feedback(request: FeedbackRequest):
+@app.route('/api/feedback', methods=['POST'])
+def submit_feedback():
     try:
-        logger.info(f"Feedback request received for email: {request.email}")
+        data = request.get_json()
         
-        # Create new feedback response
-        new_feedback = FeedbackResponse(
-            email=request.email,
-            frustration=request.frustration,
-            ai_coach_help=request.ai_coach_help,
-            confidence_area=request.confidence_area,
-            additional_features=request.additional_features
-        )
-        await new_feedback.insert()
+        required_fields = ['email', 'frustration', 'ai_coach_help', 'confidence_area']
+        for field in required_fields:
+            if not data or field not in data or not data[field].strip():
+                return jsonify({"error": f"{field} is required"}), 400
         
-        logger.info(f"Successfully saved feedback for {request.email}")
-        return SuccessResponse(
-            message="Feedback submitted successfully!",
-            success=True
-        )
+        email = data['email'].strip().lower()
+        
+        if not is_valid_email(email):
+            return jsonify({"error": "Invalid email format"}), 400
+        
+        # Add feedback
+        feedback_responses.append({
+            "email": email,
+            "frustration": data['frustration'].strip(),
+            "ai_coach_help": data['ai_coach_help'].strip(),
+            "confidence_area": data['confidence_area'].strip(),
+            "additional_features": data.get('additional_features', '').strip(),
+            "created_at": datetime.utcnow().isoformat()
+        })
+        
+        logger.info(f"Added feedback for {email}")
+        
+        return jsonify({
+            "message": "Feedback submitted successfully!",
+            "success": True
+        }), 201
         
     except Exception as e:
         logger.error(f"Feedback error: {str(e)}")
-        logger.error(traceback.format_exc())
-        raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"Failed to submit feedback: {str(e)}"
-        )
+        return jsonify({"error": "Failed to submit feedback"}), 500
 
-# Get waitlist stats (optional admin endpoint)
-@app.get("/api/stats")
-async def get_stats():
+@app.route('/api/stats', methods=['GET'])
+def get_stats():
     try:
-        waitlist_count = await WaitlistEntry.count()
-        feedback_count = await FeedbackResponse.count()
-        
-        return {
-            "waitlist_entries": waitlist_count,
-            "feedback_responses": feedback_count
-        }
-        
+        return jsonify({
+            "waitlist_entries": len(waitlist_entries),
+            "feedback_responses": len(feedback_responses)
+        })
     except Exception as e:
         logger.error(f"Stats error: {str(e)}")
-        raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"Failed to get stats: {str(e)}"
-        )
+        return jsonify({"error": "Failed to get stats"}), 500
 
-# Global exception handler
-@app.exception_handler(Exception)
-async def global_exception_handler(request: Request, exc: Exception):
-    logger.error(f"Global exception: {str(exc)}")
-    logger.error(traceback.format_exc())
-    return HTTPException(
-        status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-        detail="Internal server error"
-    )
+# Default route
+@app.route('/')
+def index():
+    return jsonify({"message": "TheTruthSchool API"})
 
 # Export for Vercel
-handler = app
+def handler(event, context):
+    return app(event, context)
+
+if __name__ == '__main__':
+    app.run(debug=True)

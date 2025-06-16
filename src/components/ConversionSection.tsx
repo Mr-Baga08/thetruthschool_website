@@ -67,11 +67,11 @@ const ConversionSection = () => {
         body: JSON.stringify({ email }),
       });
 
-      if (!response.ok) {
-        throw new Error('Failed to join waitlist');
-      }
-
       const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.error || 'Failed to join waitlist');
+      }
       
       setIsSubmitting(false);
       setShowQuiz(true);
@@ -86,7 +86,7 @@ const ConversionSection = () => {
       
       toast({
         title: "Something went wrong",
-        description: "Please try again or contact us if the problem persists.",
+        description: error.message || "Please try again or contact us if the problem persists.",
         variant: "destructive",
       });
     }
@@ -112,11 +112,11 @@ const ConversionSection = () => {
           }),
         });
 
-        if (!response.ok) {
-          throw new Error('Failed to submit feedback');
-        }
-
         const data = await response.json();
+
+        if (!response.ok) {
+          throw new Error(data.error || 'Failed to submit feedback');
+        }
 
         toast({
           title: "Thank you!",
@@ -127,7 +127,7 @@ const ConversionSection = () => {
         
         toast({
           title: "Feedback submission failed",
-          description: "We've saved your email, but couldn't record your feedback. We'll follow up with you directly.",
+          description: error.message || "We've saved your email, but couldn't record your feedback. We'll follow up with you directly.",
           variant: "destructive",
         });
       }
