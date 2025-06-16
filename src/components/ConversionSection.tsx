@@ -4,7 +4,7 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Label } from "@/components/ui/label";
-import { Check, Linkedin, Twitter, Loader2 } from "lucide-react";
+import { Check, Linkedin, Twitter, Loader2, Instagram, Youtube } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 
 interface QuizData {
@@ -14,7 +14,7 @@ interface QuizData {
   additionalFeatures: string;
 }
 
-const ConversionSection = () => {
+export const ConversionSection = () => {
   const [isVisible, setIsVisible] = useState(false);
   const [email, setEmail] = useState("");
   const [isValidEmail, setIsValidEmail] = useState(false);
@@ -278,11 +278,14 @@ const ConversionSection = () => {
           <div className="text-center mt-16">
             <p className="text-medium-gray mb-4">Follow our journey</p>
             <div className="flex justify-center space-x-6">
-              <a href="#" className="text-muted-gold hover:text-vibrant-gold transition-colors">
+              <a href="https://www.linkedin.com/company/thetruthschool/" className="text-muted-gold hover:text-vibrant-gold transition-colors">
                 <Linkedin className="w-6 h-6" />
               </a>
-              <a href="#" className="text-muted-gold hover:text-vibrant-gold transition-colors">
-                <Twitter className="w-6 h-6" />
+              <a href="https://www.instagram.com/thetruthschool_motivation/" className="text-muted-gold hover:text-vibrant-gold transition-colors">
+                <Instagram className="w-6 h-6" />
+              </a>
+              <a href="https://www.youtube.com/@TheTruthSchool" className="text-muted-gold hover:text-vibrant-gold transition-colors">
+                <Youtube className="w-6 h-6" />
               </a>
             </div>
           </div>
@@ -291,5 +294,3 @@ const ConversionSection = () => {
     </section>
   );
 };
-
-export default ConversionSection;
