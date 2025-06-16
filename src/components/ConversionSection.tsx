@@ -4,7 +4,7 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Label } from "@/components/ui/label";
-import { Check, Linkedin, Twitter, Loader2, ArrowRight } from "lucide-react";
+import { Check, Linkedin, Twitter, Loader2, ArrowRight, Youtube, Instagram } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { useNavigate } from "react-router-dom";
 
@@ -124,7 +124,7 @@ const ConversionSection = () => {
         title: "Welcome to TheTruthSchool!",
         description: data.message || "You're now on the early access list. Please help us by answering a few questions.",
       });
-    } catch (error) {
+    } catch (error: any) {
       setIsSubmitting(false);
       console.error('Error joining waitlist:', error);
       
@@ -141,6 +141,9 @@ const ConversionSection = () => {
       setCurrentQuizStep(currentQuizStep + 1);
     } else {
       // Submit quiz data
+      console.log("Starting feedback submission...");
+      setIsSubmitting(true);
+      
       try {
         const response = await fetch('/api/feedback', {
           method: 'POST',
@@ -162,11 +165,18 @@ const ConversionSection = () => {
           throw new Error(data.error || 'Failed to submit feedback');
         }
 
+        console.log("Feedback submitted successfully, showing success screen...");
+
+        // Show success screen and start redirect countdown
+        setQuizCompleted(true);
+        setRedirecting(true);
+
         toast({
           title: "Thank you!",
-          description: data.message || "Your feedback will help us build the perfect platform for you.",
+          description: "Your feedback helps us build better tools for you!",
         });
-      } catch (error) {
+
+      } catch (error: any) {
         console.error('Error submitting feedback:', error);
         
         toast({
@@ -174,6 +184,8 @@ const ConversionSection = () => {
           description: error.message || "We've saved your email, but couldn't record your feedback. We'll follow up with you directly.",
           variant: "destructive",
         });
+      } finally {
+        setIsSubmitting(false);
       }
     }
   };
@@ -406,24 +418,3 @@ const ConversionSection = () => {
 };
 
 export default ConversionSection;
-
-          <div className="text-center mt-16">
-            <p className="text-medium-gray mb-4">Follow our journey</p>
-            <div className="flex justify-center space-x-6">
-              <a href="https://www.linkedin.com/company/thetruthschool/" className="text-muted-gold hover:text-vibrant-gold transition-colors">
-                <Linkedin className="w-6 h-6" />
-              </a>
-              <a href="https://www.instagram.com/thetruthschool_motivation/" className="text-muted-gold hover:text-vibrant-gold transition-colors">
-                <Instagram className="w-6 h-6" />
-              </a>
-              <a href="https://www.youtube.com/@TheTruthSchool" className="text-muted-gold hover:text-vibrant-gold transition-colors">
-                <Youtube className="w-6 h-6" />
-              </a>
-            </div>
-          </div>
-        </div>
-      </div>
-    </section>
-  );
-};
-
