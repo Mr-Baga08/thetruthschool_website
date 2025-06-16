@@ -4,8 +4,49 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Label } from "@/components/ui/label";
-import { Check, Linkedin, Twitter, Loader2, Instagram, Youtube } from "lucide-react";
+import { Check, Linkedin, Twitter, Loader2, ArrowRight } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import { useNavigate } from "react-router-dom";
+
+// Countdown component
+const RedirectCountdown = ({ email, onRedirect }: { email: string; onRedirect: () => void }) => {
+  const [countdown, setCountdown] = useState(5);
+
+  useEffect(() => {
+    console.log("RedirectCountdown component mounted, starting countdown...");
+    
+    const timer = setInterval(() => {
+      setCountdown((prev) => {
+        console.log(`Countdown: ${prev}`);
+        if (prev <= 1) {
+          console.log("Countdown finished, calling onRedirect...");
+          clearInterval(timer);
+          onRedirect();
+          return 0;
+        }
+        return prev - 1;
+      });
+    }, 1000);
+
+    return () => {
+      console.log("RedirectCountdown component unmounting, clearing timer...");
+      clearInterval(timer);
+    };
+  }, [onRedirect]);
+
+  return (
+    <div className="bg-charcoal/50 border border-medium-gray/20 rounded-lg p-6 mb-8">
+      <div className="text-center">
+        <div className="text-vibrant-gold text-4xl font-bold mb-2">
+          {countdown}
+        </div>
+        <p className="text-medium-gray">
+          Redirecting to newsletter signup...
+        </p>
+      </div>
+    </div>
+  );
+};
 
 interface QuizData {
   frustration: string;
@@ -14,12 +55,14 @@ interface QuizData {
   additionalFeatures: string;
 }
 
-export const ConversionSection = () => {
+const ConversionSection = () => {
   const [isVisible, setIsVisible] = useState(false);
   const [email, setEmail] = useState("");
   const [isValidEmail, setIsValidEmail] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [showQuiz, setShowQuiz] = useState(false);
+  const [quizCompleted, setQuizCompleted] = useState(false);
+  const [redirecting, setRedirecting] = useState(false);
   const [currentQuizStep, setCurrentQuizStep] = useState(0);
   const [quizData, setQuizData] = useState<QuizData>({
     frustration: "",
@@ -29,6 +72,7 @@ export const ConversionSection = () => {
   });
   const sectionRef = useRef<HTMLElement>(null);
   const { toast } = useToast();
+  const navigate = useNavigate();
 
   useEffect(() => {
     const observer = new IntersectionObserver(
@@ -213,6 +257,65 @@ export const ConversionSection = () => {
                 </Button>
               </form>
             </div>
+          ) : quizCompleted ? (
+            <div className="max-w-2xl mx-auto text-center">
+              <div className="w-20 h-20 bg-vibrant-gold rounded-full flex items-center justify-center mx-auto mb-8">
+                <Check className="w-10 h-10 text-charcoal" />
+              </div>
+              
+              <h2 className="text-3xl md:text-4xl font-bold text-off-white mb-6">
+                Thank You! 🎉
+              </h2>
+              
+              <p className="text-xl text-medium-gray mb-8 leading-relaxed">
+                Your feedback is invaluable. We're redirecting you to subscribe to our newsletter 
+                for exclusive updates and career insights.
+              </p>
+              
+              {redirecting && (
+                <RedirectCountdown 
+                  email={email} 
+                  onRedirect={() => {
+                    console.log("onRedirect called, navigating to newsletter page...");
+                    try {
+                      navigate(`/newsletter?email=${encodeURIComponent(email)}`);
+                      console.log("Navigation command executed");
+                    } catch (error) {
+                      console.error("Navigation failed:", error);
+                      // Fallback to window.location
+                      window.location.href = `/newsletter?email=${encodeURIComponent(email)}`;
+                    }
+                  }}
+                />
+              )}
+              
+              <div className="flex flex-col space-y-4">
+                <Button 
+                  onClick={() => {
+                    console.log("Manual redirect button clicked");
+                    try {
+                      navigate(`/newsletter?email=${encodeURIComponent(email)}`);
+                      console.log("Manual navigation executed");
+                    } catch (error) {
+                      console.error("Manual navigation failed:", error);
+                      window.location.href = `/newsletter?email=${encodeURIComponent(email)}`;
+                    }
+                  }}
+                  className="bg-vibrant-gold text-charcoal hover:bg-vibrant-gold/90 text-lg px-8 py-6 font-semibold glow-hover"
+                >
+                  Continue to Newsletter
+                  <ArrowRight className="ml-2 w-5 h-5" />
+                </Button>
+                
+                <Button 
+                  variant="outline"
+                  onClick={() => navigate('/')}
+                  className="border-medium-gray text-medium-gray hover:border-vibrant-gold hover:text-vibrant-gold"
+                >
+                  Skip for Now
+                </Button>
+              </div>
+            </div>
           ) : (
             <div className="max-w-2xl mx-auto">
               <div className="text-center mb-8">
@@ -266,14 +369,43 @@ export const ConversionSection = () => {
 
                 <Button 
                   onClick={handleQuizNext}
-                  disabled={!quizData[quizQuestions[currentQuizStep].field] && !quizQuestions[currentQuizStep].optional}
-                  className="w-full bg-vibrant-gold text-charcoal hover:bg-vibrant-gold/90 font-semibold glow-hover"
+                  disabled={(!quizData[quizQuestions[currentQuizStep].field] && !quizQuestions[currentQuizStep].optional) || isSubmitting}
+                  className="w-full bg-vibrant-gold text-charcoal hover:bg-vibrant-gold/90 font-semibold glow-hover disabled:opacity-50"
                 >
-                  {currentQuizStep === 3 ? 'Complete' : 'Next'}
+                  {isSubmitting ? (
+                    <>
+                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                      Submitting Feedback...
+                    </>
+                  ) : (
+                    currentQuizStep === 3 ? 'Complete & Continue' : 'Next'
+                  )}
                 </Button>
               </div>
             </div>
           )}
+
+          <div className="text-center mt-16">
+            <p className="text-medium-gray mb-4">Follow our journey</p>
+            <div className="flex justify-center space-x-6">
+              <a href="https://www.linkedin.com/company/thetruthschool/" className="text-muted-gold hover:text-vibrant-gold transition-colors">
+                <Linkedin className="w-6 h-6" />
+              </a>
+              <a href="https://www.instagram.com/thetruthschool_motivation/" className="text-muted-gold hover:text-vibrant-gold transition-colors">
+                <Instagram className="w-6 h-6" />
+              </a>
+              <a href="https://www.youtube.com/@TheTruthSchool" className="text-muted-gold hover:text-vibrant-gold transition-colors">
+                <Youtube className="w-6 h-6" />
+              </a>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+  );
+};
+
+export default ConversionSection;
 
           <div className="text-center mt-16">
             <p className="text-medium-gray mb-4">Follow our journey</p>

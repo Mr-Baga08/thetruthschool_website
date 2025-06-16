@@ -22,7 +22,7 @@ const Header = () => {
           <img 
             src="/logo.png" 
             alt="TheTruthSchool Logo" 
-            className="h-10 w-auto"
+            className="h-12 w-auto"
             onError={(e) => {
               // Fallback to text if logo doesn't load
               e.currentTarget.style.display = 'none';

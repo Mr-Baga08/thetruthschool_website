@@ -9,78 +9,78 @@ import Header from "@/components/Header";
 
 // Mock blog data - In a real app, this would come from a CMS or API
 const blogPosts = [
-  {
-    id: 1,
-    title: "The Truth About Technical Interviews: What Hiring Managers Actually Look For",
-    excerpt: "Discover the hidden criteria that determine who gets hired, beyond just coding skills. Learn what separates successful candidates from the rest.",
-    content: "Technical interviews can feel like a black box, but after speaking with hiring managers from top tech companies, we've uncovered what they really evaluate...",
-    author: "Sarah Chen",
-    date: "2024-12-15",
-    readTime: "8 min read",
-    category: "Interview Tips",
-    tags: ["Technical Interviews", "Hiring", "Career Advice"],
-    featured: true
-  },
-  {
-    id: 2,
-    title: "Resume Red Flags: 5 Mistakes That Kill Your Chances Before the Interview",
-    excerpt: "These common resume mistakes immediately disqualify candidates. Learn how to avoid them and make your resume stand out to ATS systems and human reviewers.",
-    content: "Your resume has exactly 6 seconds to make an impression. Here's what instantly turns off recruiters and how to fix it...",
-    author: "Marcus Rodriguez",
-    date: "2024-12-12",
-    readTime: "6 min read",
-    category: "Resume Tips",
-    tags: ["Resume", "ATS", "Job Search"],
-    featured: false
-  },
-  {
-    id: 3,
-    title: "AI is Changing Hiring: How to Prepare for Algorithm-Driven Recruitment",
-    excerpt: "Companies are increasingly using AI to screen candidates. Here's how to optimize your application for both human and artificial intelligence reviewers.",
-    content: "The recruitment landscape is evolving rapidly with AI playing an increasingly important role. Here's what you need to know...",
-    author: "Dr. Alex Thompson",
-    date: "2024-12-10",
-    readTime: "10 min read",
-    category: "Industry Trends",
-    tags: ["AI", "Recruitment", "Future of Work"],
-    featured: true
-  },
-  {
-    id: 4,
-    title: "Salary Negotiation Scripts That Actually Work",
-    excerpt: "Tired of leaving money on the table? These proven scripts and strategies help you negotiate offers with confidence and get the compensation you deserve.",
-    content: "Salary negotiation doesn't have to be intimidating. With the right approach and these tested scripts, you can confidently negotiate better offers...",
-    author: "Jennifer Park",
-    date: "2024-12-08",
-    readTime: "12 min read",
-    category: "Career Growth",
-    tags: ["Salary", "Negotiation", "Career Advice"],
-    featured: false
-  },
-  {
-    id: 5,
-    title: "The Hidden Job Market: How to Find Opportunities That Aren't Posted",
-    excerpt: "80% of jobs are never publicly advertised. Learn the strategies top professionals use to access the hidden job market and land dream roles.",
-    content: "The best opportunities often come through networks and relationships, not job boards. Here's how to tap into the hidden job market...",
-    author: "David Kim",
-    date: "2024-12-05",
-    readTime: "9 min read",
-    category: "Job Search",
-    tags: ["Networking", "Job Search", "Hidden Jobs"],
-    featured: false
-  },
-  {
-    id: 6,
-    title: "Building Your Personal Brand: Why Developers Need to Think Like Marketers",
-    excerpt: "In today's competitive market, technical skills alone aren't enough. Learn how to build a personal brand that opens doors and accelerates your career.",
-    content: "Personal branding isn't just for influencers. For developers and tech professionals, a strong personal brand can be the difference between...",
-    author: "Rachel Foster",
-    date: "2024-12-03",
-    readTime: "7 min read",
-    category: "Personal Branding",
-    tags: ["Personal Brand", "Career Development", "Marketing"],
-    featured: false
-  }
+//   {
+//     id: 1,
+//     title: "The Truth About Technical Interviews: What Hiring Managers Actually Look For",
+//     excerpt: "Discover the hidden criteria that determine who gets hired, beyond just coding skills. Learn what separates successful candidates from the rest.",
+//     content: "Technical interviews can feel like a black box, but after speaking with hiring managers from top tech companies, we've uncovered what they really evaluate...",
+//     author: "Sarah Chen",
+//     date: "2024-12-15",
+//     readTime: "8 min read",
+//     category: "Interview Tips",
+//     tags: ["Technical Interviews", "Hiring", "Career Advice"],
+//     featured: true
+//   },
+//   {
+//     id: 2,
+//     title: "Resume Red Flags: 5 Mistakes That Kill Your Chances Before the Interview",
+//     excerpt: "These common resume mistakes immediately disqualify candidates. Learn how to avoid them and make your resume stand out to ATS systems and human reviewers.",
+//     content: "Your resume has exactly 6 seconds to make an impression. Here's what instantly turns off recruiters and how to fix it...",
+//     author: "Marcus Rodriguez",
+//     date: "2024-12-12",
+//     readTime: "6 min read",
+//     category: "Resume Tips",
+//     tags: ["Resume", "ATS", "Job Search"],
+//     featured: false
+//   },
+//   {
+//     id: 3,
+//     title: "AI is Changing Hiring: How to Prepare for Algorithm-Driven Recruitment",
+//     excerpt: "Companies are increasingly using AI to screen candidates. Here's how to optimize your application for both human and artificial intelligence reviewers.",
+//     content: "The recruitment landscape is evolving rapidly with AI playing an increasingly important role. Here's what you need to know...",
+//     author: "Dr. Alex Thompson",
+//     date: "2024-12-10",
+//     readTime: "10 min read",
+//     category: "Industry Trends",
+//     tags: ["AI", "Recruitment", "Future of Work"],
+//     featured: true
+//   },
+//   {
+//     id: 4,
+//     title: "Salary Negotiation Scripts That Actually Work",
+//     excerpt: "Tired of leaving money on the table? These proven scripts and strategies help you negotiate offers with confidence and get the compensation you deserve.",
+//     content: "Salary negotiation doesn't have to be intimidating. With the right approach and these tested scripts, you can confidently negotiate better offers...",
+//     author: "Jennifer Park",
+//     date: "2024-12-08",
+//     readTime: "12 min read",
+//     category: "Career Growth",
+//     tags: ["Salary", "Negotiation", "Career Advice"],
+//     featured: false
+//   },
+//   {
+//     id: 5,
+//     title: "The Hidden Job Market: How to Find Opportunities That Aren't Posted",
+//     excerpt: "80% of jobs are never publicly advertised. Learn the strategies top professionals use to access the hidden job market and land dream roles.",
+//     content: "The best opportunities often come through networks and relationships, not job boards. Here's how to tap into the hidden job market...",
+//     author: "David Kim",
+//     date: "2024-12-05",
+//     readTime: "9 min read",
+//     category: "Job Search",
+//     tags: ["Networking", "Job Search", "Hidden Jobs"],
+//     featured: false
+//   },
+//   {
+//     id: 6,
+//     title: "Building Your Personal Brand: Why Developers Need to Think Like Marketers",
+//     excerpt: "In today's competitive market, technical skills alone aren't enough. Learn how to build a personal brand that opens doors and accelerates your career.",
+//     content: "Personal branding isn't just for influencers. For developers and tech professionals, a strong personal brand can be the difference between...",
+//     author: "Rachel Foster",
+//     date: "2024-12-03",
+//     readTime: "7 min read",
+//     category: "Personal Branding",
+//     tags: ["Personal Brand", "Career Development", "Marketing"],
+//     featured: false
+//   }
 ];
 
 const categories = ["All", "Interview Tips", "Resume Tips", "Career Growth", "Job Search", "Industry Trends", "Personal Branding"];
