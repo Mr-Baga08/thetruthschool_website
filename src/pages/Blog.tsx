@@ -6,6 +6,7 @@ import { Calendar, Clock, User, ArrowRight, Search, ArrowLeft } from "lucide-rea
 import { useNavigate } from "react-router-dom";
 import BackgroundAnimation from "@/components/BackgroundAnimation";
 import Header from "@/components/Header";
+import Footer from "@/components/Footer";
 
 // Mock blog data - In a real app, this would come from a CMS or API
 const blogPosts = [
@@ -286,6 +287,7 @@ const Blog = () => {
           </Button>
         </div>
       </div>
+      <Footer/>
     </div>
   );
 };

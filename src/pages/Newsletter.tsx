@@ -6,6 +6,7 @@ import { useToast } from "@/hooks/use-toast";
 import { Check, Mail, Bell, TrendingUp, Users, ArrowLeft } from "lucide-react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import BackgroundAnimation from "@/components/BackgroundAnimation";
+import Footer from "@/components/Footer";
 
 const Newsletter = () => {
   const [email, setEmail] = useState("");
@@ -258,6 +259,7 @@ const Newsletter = () => {
           </div>
         </div>
       </div>
+      <Footer/>
     </div>
   );
 };
